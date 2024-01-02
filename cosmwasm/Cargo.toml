@@ -1,5 +1,7 @@
 [workspace]
 members = ["contracts/*", "packages/*"]
+resolver = "2"
+
 
 [workspace.package]
 version = "0.1.0"
@@ -7,15 +9,16 @@ edition = "2021"
 repository = "https://github.com/EmpowerPlastic/empowerchain"
 
 [workspace.dependencies]
-cosmwasm-schema = "1.1.9"
-cosmwasm-std = "1.1.9"
-cw-storage-plus = "1.0.1"
+cosmwasm-schema = "1.5.0"
+cosmwasm-std = "1.5.0"
+cw-storage-plus = "1.2.0"
 serde = { version = "1.0.151", features = ["derive"] }
 thiserror = "1.0.38"
 cosmos-sdk-proto = { version = "0.16", default-features = false }
 prost = "0.11"
 prost-types = "0.11"
+cw721-base = "0.18.0"
 
-cw-multi-test = "0.16.2"
+cw-multi-test = "0.20.0"
 
 fee-splitter = { path = "packages/fee-splitter", version = "*" }
