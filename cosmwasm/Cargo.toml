@@ -4,9 +4,13 @@ resolver = "2"
 
 
 [workspace.package]
-version = "0.1.0"
+version       = "0.18.0"
 edition = "2021"
 repository = "https://github.com/EmpowerPlastic/empowerchain"
+homepage      = "https://cosmwasm.com"
+documentation = "https://docs.cosmwasm.com"
+rust-version  = "1.65"
+license       = "Apache-2.0"
 
 [workspace.dependencies]
 cosmwasm-schema = "1.5.0"
@@ -17,8 +21,38 @@ thiserror = "1.0.38"
 cosmos-sdk-proto = { version = "0.16", default-features = false }
 prost = "0.11"
 prost-types = "0.11"
-cw721-base = "0.18.0"
-
+cw2             = "^1.1"
+cw20            = "^1.1"
+cw721           = { version = "*", path = "./packages/cw721" }
+cw721-base      = { version = "*", path = "./contracts/cw721-base" }
+cw721-base-016  = { version = "0.16.0", package = "cw721-base" }
+cw-ownable      = "^0.5"
 cw-multi-test = "0.20.0"
+cw-utils        = "^1.0"
+schemars        = "^0.8"
 
 fee-splitter = { path = "packages/fee-splitter", version = "*" }
+
+[profile.release.package.cw721-base]
+codegen-units = 1
+incremental   = false
+
+[profile.release.package.cw721-metadata-onchain]
+codegen-units = 1
+incremental   = false
+
+[profile.release.package.cw721-fixed-price]
+codegen-units = 1
+incremental   = false
+
+[profile.release.package.cw721-non-transferable]
+codegen-units = 1
+incremental   = false
+
+[profile.release]
+rpath            = false
+lto              = true
+overflow-checks  = true
+opt-level        = 3
+debug            = false
+debug-assertions = false
