@@ -124,6 +124,21 @@ where
             })?;
 
         self.increment_tokens(deps.storage)?;
+        
+        let transfer_credit_msg = ExecuteMsg::TransferCredit {
+            from: info.sender.to_string(),
+            to: owner.clone(),
+            denom: "credit_denom".to_string(), // Replace with actual denom
+            amount: 100, // Replace with the actual amount
+            retire: false,
+        };
+    
+        // Convert to CosmosMsg to be executed by the chain
+        let cosmos_msg = CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: "target_contract_address".to_string(), // Address of the target contract handling credits
+            msg: to_binary(&transfer_credit_msg)?,
+            funds: vec![],
+        });
 
         Ok(Response::new()
             .add_attribute("action", "mint")
@@ -344,6 +359,35 @@ where
             .add_attribute("action", "burn")
             .add_attribute("sender", info.sender)
             .add_attribute("token_id", token_id))
+    }
+
+    fn execute_transfer_credits(
+        deps: DepsMut,
+        env: Env,
+        info: MessageInfo,
+        target_contract_address: String, // Address of the target contract
+        recipient_address: String,       // Address of the recipient
+        credit_denom: String,            // Denomination of the credits
+        credit_amount: u64,              // Amount of credits to transfer
+        retire_flag: bool,               // Flag to retire credits or not
+    ) -> Result<Response<C>, ContractError> {
+        let transfer_msg = MsgTransferCredits {
+            from: info.sender.to_string(),
+            to: recipient_address,
+            denom: credit_denom,
+            amount: credit_amount,
+            retire: retire_flag,
+        };
+    
+        let wasm_msg = WasmMsg::Execute {
+            contract_addr: target_contract_address,
+            msg: to_binary(&transfer_msg)?,
+            funds: vec![],
+        };
+    
+        let cosmos_msg = CosmosMsg::Wasm(wasm_msg);
+    
+        Ok(Response::new().add_message(cosmos_msg))
     }
 }
 
