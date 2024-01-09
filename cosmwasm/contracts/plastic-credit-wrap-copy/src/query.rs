@@ -8,7 +8,7 @@ use cosmwasm_std::{
 use cw721::{
     AllNftInfoResponse, ApprovalResponse, ApprovalsResponse, ContractInfoResponse, Cw721Query,
     Expiration, NftInfoResponse, NumTokensResponse, OperatorResponse, OperatorsResponse,
-    OwnerOfResponse, TokensResponse,
+    OwnerOfResponse, PlasticCreditInfoResponse, TokensResponse,
 };
 use cw_storage_plus::Bound;
 use cw_utils::maybe_addr;
@@ -239,6 +239,20 @@ where
             },
         })
     }
+
+    fn plastic_credit_info(
+        &self,
+        deps: Deps,
+        env: Env,
+        token_id: String,
+    ) -> StdResult<PlasticCreditInfoResponse> {
+        let info = self.plastic_credits.load(deps.storage, &token_id)?;
+
+        Ok(PlasticCreditInfoResponse {
+            denom: info.denom,
+            amount: info.amount,
+        })
+    }
 }
 
 impl<'a, T, C, E, Q> Cw721Contract<'a, T, C, E, Q>
@@ -328,6 +342,9 @@ where
             QueryMsg::Extension { msg: _ } => Ok(Binary::default()),
             QueryMsg::GetWithdrawAddress {} => {
                 to_json_binary(&self.withdraw_address.may_load(deps.storage)?)
+            }
+            QueryMsg::PlasticCreditInfo { token_id } => {
+                to_json_binary(&self.plastic_credit_info(deps, env, token_id)?)
             }
         }
     }

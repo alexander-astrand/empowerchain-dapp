@@ -64,28 +64,16 @@ pub enum ExecuteMsg<T, E> {
         token_uri: Option<String>,
         /// Any custom extension used by this contract
         extension: T,
-        
-        from: String,      // Making from optional
-        to: String,        // Making to optional
-        denom: String,     // Making denom optional
-        amount: u64,      // Making amount optional
-    },
 
-    /// Burn an NFT the sender has access to
-    Burn { 
-        token_id: String,
-        to: String,
+        from: String,
+
         denom: String,
+
         amount: u64,
     },
 
-    // TransferCredit {
-    //     from: String,
-    //     to: String,
-    //     denom: String,
-    //     amount: u64,
-    //     retire: bool,
-    // },
+    /// Burn an NFT the sender has access to
+    Burn { token_id: String },
 
     /// Extension msg
     Extension { msg: E },
@@ -97,7 +85,6 @@ pub enum ExecuteMsg<T, E> {
     /// Withdraw from the contract to the given address. Anyone can call this,
     /// which is okay since withdraw address has been set by owner.
     WithdrawFunds { amount: Coin },
-
     // TransferCreditsFromContract {
     //     to: String,
     //     denom: String,
@@ -210,6 +197,9 @@ pub enum QueryMsg<Q: JsonSchema> {
 
     #[returns(Option<String>)]
     GetWithdrawAddress {},
+
+    #[returns(cw721::PlasticCreditInfoResponse)]
+    PlasticCreditInfo { token_id: String },
 }
 
 /// Shows who can mint these tokens

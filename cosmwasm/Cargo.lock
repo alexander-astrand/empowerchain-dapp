@@ -416,28 +416,6 @@ dependencies = [
 [[package]]
 name = "cw721-base"
 version = "0.18.0"
-dependencies = [
- "cosmos-sdk-proto",
- "cosmwasm-schema",
- "cosmwasm-std",
- "cw-multi-test",
- "cw-ownable",
- "cw-storage-plus 1.2.0",
- "cw-utils 1.0.3",
- "cw2 1.1.2",
- "cw721 0.18.0",
- "cw721-base 0.16.0",
- "cw721-base 0.18.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "prost 0.11.9",
- "prost-types",
- "schemars",
- "serde",
- "thiserror",
-]
-
-[[package]]
-name = "cw721-base"
-version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "da518d9f68bfda7d972cbaca2e8fcf04651d0edc3de72b04ae2bcd9289c81614"
 dependencies = [
@@ -770,6 +748,28 @@ dependencies = [
  "fee-splitter",
  "prost 0.11.9",
  "prost-types",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "plastic-credit-wrapper"
+version = "0.18.0"
+dependencies = [
+ "cosmos-sdk-proto",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test",
+ "cw-ownable",
+ "cw-storage-plus 1.2.0",
+ "cw-utils 1.0.3",
+ "cw2 1.1.2",
+ "cw721 0.18.0",
+ "cw721-base 0.16.0",
+ "cw721-base 0.18.0",
+ "prost 0.11.9",
+ "prost-types",
+ "schemars",
  "serde",
  "thiserror",
 ]

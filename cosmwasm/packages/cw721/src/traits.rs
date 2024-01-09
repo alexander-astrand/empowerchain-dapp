@@ -3,7 +3,7 @@ use serde::Serialize;
 
 use crate::{
     AllNftInfoResponse, ApprovalResponse, ApprovalsResponse, ContractInfoResponse, NftInfoResponse,
-    NumTokensResponse, OperatorResponse, OperatorsResponse, OwnerOfResponse, TokensResponse,
+    NumTokensResponse, OperatorResponse, OperatorsResponse, OwnerOfResponse, TokensResponse, PlasticCreditInfoResponse,
 };
 use cosmwasm_std::{Binary, CustomMsg, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 use cw_utils::Expiration;
@@ -83,9 +83,6 @@ where
         env: Env,
         info: MessageInfo,
         token_id: String,
-        to: String,
-        denom: String,
-        amount: u64,
     ) -> Result<Response<C>, Self::Err>;
 }
 
@@ -168,4 +165,12 @@ where
         token_id: String,
         include_expired: bool,
     ) -> StdResult<AllNftInfoResponse<T>>;
+
+    fn plastic_credit_info(
+        &self,
+        deps: Deps,
+        env: Env,
+        token_id: String,
+    ) -> StdResult<PlasticCreditInfoResponse>;
+
 }

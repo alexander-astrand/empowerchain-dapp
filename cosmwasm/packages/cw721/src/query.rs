@@ -73,6 +73,9 @@ pub enum Cw721QueryMsg {
         start_after: Option<String>,
         limit: Option<u32>,
     },
+    PlasticCreditInfo {
+        token_id: String,
+    },
 }
 
 #[cw_serde]
@@ -146,4 +149,10 @@ pub struct TokensResponse {
     /// If there are more than `limit`, use `start_after` in future queries
     /// to achieve pagination.
     pub tokens: Vec<String>,
+}
+
+#[cw_serde]
+pub struct PlasticCreditInfoResponse {
+    pub denom: String,
+    pub amount: u64,
 }

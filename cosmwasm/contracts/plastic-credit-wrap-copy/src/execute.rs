@@ -3,17 +3,18 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 
 use cosmwasm_std::{
-    Addr, BankMsg, Binary, Coin, CustomMsg, Deps, DepsMut, Env, MessageInfo, Response, Storage, CosmosMsg,
+    Addr, BankMsg, Binary, Coin, CosmosMsg, CustomMsg, Deps, DepsMut, Env, MessageInfo, Response,
+    Storage,
 };
 
 use cw721::{ContractInfoResponse, Cw721Execute, Cw721ReceiveMsg, Expiration};
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg};
-use crate::state::{Approval, Cw721Contract, TokenInfo, PlasticCreditInfo};
+use crate::state::{Approval, Cw721Contract, PlasticCreditInfo, TokenInfo};
 use cosmos_sdk_proto::cosmos::authz::v1beta1::MsgExec;
-use cosmos_sdk_proto::traits::{Message, TypeUrl};
 use cosmos_sdk_proto::traits::MessageExt;
+use cosmos_sdk_proto::traits::{Message, TypeUrl};
 
 impl<'a, T, C, E, Q> Cw721Contract<'a, T, C, E, Q>
 where
@@ -59,10 +60,11 @@ where
                 token_uri,
                 extension,
                 from,
-                to,
                 denom,
                 amount,
-            } => self.mint(deps, info, token_id, owner, token_uri, extension, from, to, denom, amount),
+            } => self.mint(
+                deps, env, info, token_id, owner, token_uri, extension, from, denom, amount,
+            ),
             ExecuteMsg::Approve {
                 spender,
                 token_id,
@@ -84,7 +86,7 @@ where
                 token_id,
                 msg,
             } => self.send_nft(deps, env, info, contract, token_id, msg),
-            ExecuteMsg::Burn { token_id, to, denom, amount } => self.burn(deps, env, info, token_id, to, denom, amount),
+            ExecuteMsg::Burn { token_id } => self.burn(deps, env, info, token_id),
             ExecuteMsg::UpdateOwnership(action) => Self::update_ownership(deps, env, info, action),
             ExecuteMsg::Extension { msg: _ } => Ok(Response::default()),
             ExecuteMsg::SetWithdrawAddress { address } => {
@@ -94,26 +96,6 @@ where
                 self.remove_withdraw_address(deps.storage, &info.sender)
             }
             ExecuteMsg::WithdrawFunds { amount } => self.withdraw_funds(deps.storage, &amount),
-            // ExecuteMsg::TransferCreditsToContract {
-            //     from,
-            //     to,
-            //     denom,
-            //     amount,
-            // } => Self::create_transfer_credits_to_contract_msg(from, to, denom, amount),
-
-            // ExecuteMsg::TransferCreditsFromContract {
-            //     to,
-            //     denom,
-            //     number_of_credits,
-            // } => Self::create_transfer_credits_from_contract_msg(env, to, denom, number_of_credits),
-
-            // ExecuteMsg::TransferCredit {
-            //     from,
-            //     to,
-            //     denom,
-            //     amount,
-            //     retire,
-            // } => self.execute_transfer_credits(deps, env, info, from, to, denom, amount, retire),
         }
     }
 }
@@ -129,18 +111,18 @@ where
     pub fn mint(
         &self,
         deps: DepsMut,
+        env: Env,
         info: MessageInfo,
         token_id: String,
         owner: String,
         token_uri: Option<String>,
         extension: T,
         from: String,
-        to: String,
         denom: String,
         amount: u64,
     ) -> Result<Response<C>, ContractError> {
         cw_ownable::assert_owner(deps.storage, &info.sender)?;
- 
+
         let token = TokenInfo {
             owner: deps.api.addr_validate(&owner)?,
             approvals: vec![],
@@ -155,17 +137,20 @@ where
 
         self.increment_tokens(deps.storage)?;
 
-        let plastic_credit_info = PlasticCreditInfo { denom: denom.clone(), amount };
-        self.plastic_credits.save(deps.storage, &token_id, &plastic_credit_info)?;
-
-        println!("credit info: {:?}", self.plastic_credits.load(deps.storage, &token_id)?);
-
-        Self::create_transfer_credits_to_contract_msg(
-            from,
-            to,
-            denom,
+        let plastic_credit_info = PlasticCreditInfo {
+            denom: denom.clone(),
             amount,
+        };
+        self.plastic_credits
+            .save(deps.storage, &token_id, &plastic_credit_info)?;
+
+        println!(
+            "credit info: {:?}",
+            self.plastic_credits.load(deps.storage, &token_id)?
         );
+        println!("contract address: {:?}", env.contract.address.to_string());
+
+        Self::create_transfer_credits_to_contract_msg(env, from, denom, amount);
 
         Ok(Response::new()
             .add_attribute("action", "mint")
@@ -173,7 +158,7 @@ where
             .add_attribute("owner", owner)
             .add_attribute("token_id", token_id))
     }
-    
+
     pub fn update_ownership(
         deps: DepsMut,
         env: Env,
@@ -375,9 +360,6 @@ where
         env: Env,
         info: MessageInfo,
         token_id: String,
-        to: String,
-        denom: String,
-        amount: u64,
     ) -> Result<Response<C>, ContractError> {
         let token = self.tokens.load(deps.storage, &token_id)?;
         self.check_can_send(deps.as_ref(), &env, &info, &token)?;
@@ -390,20 +372,15 @@ where
         let amount = credit_info.amount;
         let to = token.owner.to_string();
 
-        Self::create_transfer_credits_from_contract_msg(
-            env,
-            to,
-            denom,
-            amount,
-        );
+        println!("token owner: {:?}", to);
 
-        Ok(Response::new()
-            .add_attributes(vec![
-                ("action", "burn"),
-                ("sender", &info.sender.to_string()),
-                ("token_id", &token_id),
-            ])
-      )
+        Self::create_transfer_credits_from_contract_msg(env, to, denom, amount);
+
+        Ok(Response::new().add_attributes(vec![
+            ("action", "burn"),
+            ("sender", &info.sender.to_string()),
+            ("token_id", &token_id),
+        ]))
     }
 }
 
@@ -538,68 +515,44 @@ where
         }
     }
 
-    // fn execute_transfer_credits(
-    //     &self,
-    //     deps: DepsMut,
-    //     env: Env,
-    //     info: MessageInfo,
-    //     spender_address: String,         // Address of the spender
-    //     recipient_address: String,       // Address of the recipient
-    //     credit_denom: String,            // Denomination of the credits
-    //     credit_amount: u64,              // Amount of credits to transfer
-    //     retire_flag: bool,               // Flag to retire credits or not
-    // ) -> Result<Response<C>, ContractError> {
-
-    //     let transfer_msg = TransferMsg {
-    //         from: spender_address,
-    //         to: recipient_address,
-    //         denom: credit_denom,
-    //         amount: credit_amount,
-    //         retire: retire_flag,
-    //     };
-        
-    //     println!("transfer_msg: {:?}", transfer_msg);
-
-    //     let wasm_msg = WasmMsg::Execute {
-    //         contract_addr: "empower14hj2tavq8fpesdwxxcu44rty3hh90vhujrvcmstl4zr3txmfvw9sfg4umu".to_string(),
-    //         msg: to_json_binary(&transfer_msg)?,
-    //         funds: vec![],
-    //     };
-        
-    //     println!("wasm_msg: {:?}", wasm_msg);
-
-    //     let cosmos_msg = CosmosMsg::Wasm(wasm_msg);
-
-    //     println!("cosmos_msg: {:?}", cosmos_msg);
-    
-    //     Ok(Response::new().add_message(cosmos_msg))
-    // }
-
-
-    fn create_transfer_credits_to_contract_msg(from: String, to: String, denom: String, amount: u64) -> CosmosMsg {
+    fn create_transfer_credits_to_contract_msg(
+        env: Env,
+        from: String,
+        denom: String,
+        amount: u64,
+    ) -> CosmosMsg {
         let transfer_msg = MsgTransferCredits {
             from,
-            to: to.clone(),
+            to: env.contract.address.to_string(),
             denom,
             amount,
             retire: false,
         };
+
+        println!("transfer msg: {:?}", transfer_msg);
+
         let exec_msg = MsgExec {
             msgs: vec![transfer_msg.to_any().unwrap()],
-            grantee: to,
+            grantee: env.contract.address.to_string(),
         };
+
         CosmosMsg::Stargate {
             type_url: "/cosmos.authz.v1beta1.MsgExec".to_string(),
             value: Binary::from(exec_msg.encode_to_vec()),
         }
     }
 
-    fn create_transfer_credits_from_contract_msg(env: Env, to: String, denom: String, number_of_credits: u64) -> CosmosMsg {
+    fn create_transfer_credits_from_contract_msg(
+        env: Env,
+        to: String,
+        denom: String,
+        amount: u64,
+    ) -> CosmosMsg {
         let transfer_to_buyer_msg = MsgTransferCredits {
             from: env.contract.address.to_string(),
             to,
             denom,
-            amount: number_of_credits,
+            amount,
             retire: false,
         };
         CosmosMsg::Stargate {
@@ -610,19 +563,19 @@ where
 }
 
 #[derive(Clone, PartialEq, ::prost::Message)]
-        pub struct MsgTransferCredits {
-            #[prost(string, tag = "1")]
-            pub from: ::prost::alloc::string::String,
-            #[prost(string, tag = "2")]
-            pub to: ::prost::alloc::string::String,
-            #[prost(string, tag = "3")]
-            pub denom: ::prost::alloc::string::String,
-            #[prost(uint64, tag = "4")]
-            pub amount: u64,
-            #[prost(bool, tag = "5")]
-            pub retire: bool,
-        }
+pub struct MsgTransferCredits {
+    #[prost(string, tag = "1")]
+    pub from: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub to: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub denom: ::prost::alloc::string::String,
+    #[prost(uint64, tag = "4")]
+    pub amount: u64,
+    #[prost(bool, tag = "5")]
+    pub retire: bool,
+}
 
-    impl TypeUrl for MsgTransferCredits {
-        const TYPE_URL: &'static str = "/empowerchain.plasticcredit.MsgTransferCredits";
-    }
+impl TypeUrl for MsgTransferCredits {
+    const TYPE_URL: &'static str = "/empowerchain.plasticcredit.MsgTransferCredits";
+}

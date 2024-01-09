@@ -92,7 +92,6 @@ fn minting() {
         token_uri: Some(token_uri.clone()),
         extension: None,
         from: "hellp".to_string(),
-        to: "haj".to_string(),
         denom: "pcrd".to_string(),
         amount: 65,
     };
@@ -148,7 +147,6 @@ fn minting() {
         token_uri: None,
         extension: None,
         from: "hellp".to_string(),
-        to: "haj".to_string(),
         denom: "pcrd".to_string(),
         amount: 65,
     };
@@ -179,7 +177,6 @@ fn test_update_minter() {
         token_uri: Some(token_uri.clone()),
         extension: None,
         from: "hellp".to_string(),
-        to: "haj".to_string(),
         denom: "pcrd".to_string(),
         amount: 65,
     };
@@ -256,7 +253,6 @@ fn test_update_minter() {
         token_uri: Some(token_uri),
         extension: None,
         from: "hellp".to_string(),
-        to: "haj".to_string(),
         denom: "pcrd".to_string(),
         amount: 65,
     };
@@ -287,12 +283,11 @@ fn burning() {
         token_uri: Some(token_uri),
         extension: None,
         from: "hellp".to_string(),
-        to: "haj".to_string(),
         denom: "pcrd".to_string(),
         amount: 65,
     };
 
-    let burn_msg = ExecuteMsg::Burn { token_id, to: "haj".to_string(), denom: "pcrd".to_string(), amount: 64 };
+    let burn_msg = ExecuteMsg::Burn { token_id };
 
     // mint some NFT
     let allowed = mock_info(MINTER, &[]);
@@ -341,7 +336,6 @@ fn transferring_nft() {
         token_uri: Some(token_uri),
         extension: None,
         from: "hellp".to_string(),
-        to: "haj".to_string(),
         denom: "pcrd".to_string(),
         amount: 65,
     };
@@ -399,7 +393,6 @@ fn sending_nft() {
         token_uri: Some(token_uri),
         extension: None,
         from: "hellp".to_string(),
-        to: "haj".to_string(),
         denom: "pcrd".to_string(),
         amount: 65,
     };
@@ -469,7 +462,7 @@ fn approving_revoking() {
         token_uri: Some(token_uri),
         extension: None,
         from: "hellp".to_string(),
-        to: "haj".to_string(),
+
         denom: "pcrd".to_string(),
         amount: 65,
     };
@@ -620,7 +613,6 @@ fn approving_all_revoking_all() {
         token_uri: Some(token_uri1),
         extension: None,
         from: "hellp".to_string(),
-        to: "haj".to_string(),
         denom: "pcrd".to_string(),
         amount: 65,
     };
@@ -636,7 +628,6 @@ fn approving_all_revoking_all() {
         token_uri: Some(token_uri2),
         extension: None,
         from: "hellp".to_string(),
-        to: "haj".to_string(),
         denom: "pcrd".to_string(),
         amount: 65,
     };
@@ -984,7 +975,6 @@ fn query_tokens_by_owner() {
         token_uri: None,
         extension: None,
         from: "hellp".to_string(),
-        to: "haj".to_string(),
         denom: "pcrd".to_string(),
         amount: 65,
     };
@@ -998,7 +988,6 @@ fn query_tokens_by_owner() {
         token_uri: None,
         extension: None,
         from: "hellp".to_string(),
-        to: "haj".to_string(),
         denom: "pcrd".to_string(),
         amount: 65,
     };
@@ -1012,7 +1001,6 @@ fn query_tokens_by_owner() {
         token_uri: None,
         extension: None,
         from: "hellp".to_string(),
-        to: "haj".to_string(),
         denom: "pcrd".to_string(),
         amount: 65,
     };
@@ -1053,41 +1041,3 @@ fn query_tokens_by_owner() {
         .unwrap();
     assert_eq!(&by_demeter[1..], &tokens.tokens[..]);
 }
-
-
-// #[test]
-// fn transfer_plastic_credits() {
-
-//     let mut deps = mock_dependencies();
-//     let contract = setup_contract(deps.as_mut());
-
-//     // Mock information for the spender (owner of the credits)
-//     let spender_info = mock_info("venus", &[]);
-
-//     // Setup message for transferring credits
-//     let transfer_msg = ExecuteMsg::TransferCredit {
-//         from: String::from("venus"),
-//         to: String::from("random"),
-//         denom: String::from("plastic"),
-//         amount: 100,
-//         retire: false,
-//     };
-
-//     // Attempt to transfer credits
-//     let transfer_result = contract.execute(deps.as_mut(), mock_env(), spender_info, transfer_msg);
-
-//     // Assertions
-//     match transfer_result {
-//         Ok(response) => {
-//             // Check attributes and other response details
-//             assert_eq!(response.attributes, vec![
-//                 attr("action", "transfer_credit"),
-//                 attr("sender", "venus"),
-//                 attr("recipient", "random"),
-//                 attr("denom", "plastic"),
-//                 attr("amount", "100"),
-//             ]);
-//         },
-//         Err(err) => panic!("Transfer failed: {:?}", err),
-//     }
-// }
