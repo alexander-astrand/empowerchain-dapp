@@ -31,9 +31,13 @@ cw-utils        = { workspace = true }
 cw2             = { workspace = true }
 cw721           = { workspace = true }
 cw721-base-016  = { workspace = true, features = ["library"] }
+cw721-base      = { workspace = true}
 schemars        = { workspace = true }
 serde           = { workspace = true }
 thiserror       = { workspace = true }
+cosmos-sdk-proto = { workspace = true, default-features = false }
+prost = { workspace = true }
+prost-types = { workspace = true }
 
 [dev-dependencies]
 cw-multi-test   = { workspace = true }

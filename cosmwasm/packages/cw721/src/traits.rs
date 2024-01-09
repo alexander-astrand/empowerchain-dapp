@@ -83,6 +83,9 @@ where
         env: Env,
         info: MessageInfo,
         token_id: String,
+        to: String,
+        denom: String,
+        amount: u64,
     ) -> Result<Response<C>, Self::Err>;
 }
 

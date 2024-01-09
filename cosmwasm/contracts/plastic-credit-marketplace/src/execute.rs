@@ -664,7 +664,25 @@ mod tests {
                     denom: "token".to_string(),
                     amount: Uint128::from(1337u128),
                 },
-            };
+            };;
+            use cosmwasm_std::{entry_point, Binary, DepsMut, Env, MessageInfo, Response, Uint64, Coin, CosmosMsg, BankMsg, Addr, Decimal};
+            use fee_splitter::{edit_fee_split_config, get_fee_split, Share};
+            use crate::{msg::ExecuteMsg, error::ContractError, state::{LISTINGS, Listing}};
+            use crate::error::ContractError::FeeSplitError;
+            use crate::state::ADMIN;
+            
+            #[entry_point]
+            pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> Result<Response, ContractError> {
+                match msg {
+                    ExecuteMsg::CreateListing { denom, number_of_credits, price_per_credit } => execute_create_listing(deps, env, info, denom, number_of_credits, price_per_credit),
+                    ExecuteMsg::BuyCredits { owner, denom, number_of_credits_to_buy } => execute_buy_credits(deps, env, info, owner, denom, number_of_credits_to_buy),
+                    ExecuteMsg::UpdateListing { denom, number_of_credits, price_per_credit } => execute_update_listing(deps, env, info, denom, number_of_credits, price_per_credit),
+                    ExecuteMsg::CancelListing { denom } => execute_cancel_listing(deps, env, info, denom),
+                    ExecuteMsg::EditFeeSplitConfig { fee_percentage, shares } => execute_edit_fee_split_config(deps, info, fee_percentage, shares),
+                }
+            }
+            
+            pub fn execute_create_listing(
             execute(deps.as_mut(), mock_env(), creator_info.clone(), create_listing_msg).unwrap();
 
             let update_listing_msg = ExecuteMsg::UpdateListing {

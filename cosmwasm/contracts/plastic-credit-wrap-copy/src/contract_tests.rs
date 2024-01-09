@@ -91,6 +91,10 @@ fn minting() {
         owner: String::from("medusa"),
         token_uri: Some(token_uri.clone()),
         extension: None,
+        from: "hellp".to_string(),
+        to: "haj".to_string(),
+        denom: "pcrd".to_string(),
+        amount: 65,
     };
 
     // random cannot mint
@@ -143,6 +147,10 @@ fn minting() {
         owner: String::from("hercules"),
         token_uri: None,
         extension: None,
+        from: "hellp".to_string(),
+        to: "haj".to_string(),
+        denom: "pcrd".to_string(),
+        amount: 65,
     };
 
     let allowed = mock_info(MINTER, &[]);
@@ -170,6 +178,10 @@ fn test_update_minter() {
         owner: String::from("medusa"),
         token_uri: Some(token_uri.clone()),
         extension: None,
+        from: "hellp".to_string(),
+        to: "haj".to_string(),
+        denom: "pcrd".to_string(),
+        amount: 65,
     };
 
     // Minter can mint
@@ -243,6 +255,10 @@ fn test_update_minter() {
         owner: String::from("medusa"),
         token_uri: Some(token_uri),
         extension: None,
+        from: "hellp".to_string(),
+        to: "haj".to_string(),
+        denom: "pcrd".to_string(),
+        amount: 65,
     };
 
     // Old owner can not mint.
@@ -270,9 +286,13 @@ fn burning() {
         owner: MINTER.to_string(),
         token_uri: Some(token_uri),
         extension: None,
+        from: "hellp".to_string(),
+        to: "haj".to_string(),
+        denom: "pcrd".to_string(),
+        amount: 65,
     };
 
-    let burn_msg = ExecuteMsg::Burn { token_id };
+    let burn_msg = ExecuteMsg::Burn { token_id, to: "haj".to_string(), denom: "pcrd".to_string(), amount: 64 };
 
     // mint some NFT
     let allowed = mock_info(MINTER, &[]);
@@ -320,6 +340,10 @@ fn transferring_nft() {
         owner: String::from("venus"),
         token_uri: Some(token_uri),
         extension: None,
+        from: "hellp".to_string(),
+        to: "haj".to_string(),
+        denom: "pcrd".to_string(),
+        amount: 65,
     };
 
     let minter = mock_info(MINTER, &[]);
@@ -374,6 +398,10 @@ fn sending_nft() {
         owner: String::from("venus"),
         token_uri: Some(token_uri),
         extension: None,
+        from: "hellp".to_string(),
+        to: "haj".to_string(),
+        denom: "pcrd".to_string(),
+        amount: 65,
     };
 
     let minter = mock_info(MINTER, &[]);
@@ -440,6 +468,10 @@ fn approving_revoking() {
         owner: String::from("demeter"),
         token_uri: Some(token_uri),
         extension: None,
+        from: "hellp".to_string(),
+        to: "haj".to_string(),
+        denom: "pcrd".to_string(),
+        amount: 65,
     };
 
     let minter = mock_info(MINTER, &[]);
@@ -587,6 +619,10 @@ fn approving_all_revoking_all() {
         owner: String::from("demeter"),
         token_uri: Some(token_uri1),
         extension: None,
+        from: "hellp".to_string(),
+        to: "haj".to_string(),
+        denom: "pcrd".to_string(),
+        amount: 65,
     };
 
     let minter = mock_info(MINTER, &[]);
@@ -599,6 +635,10 @@ fn approving_all_revoking_all() {
         owner: String::from("demeter"),
         token_uri: Some(token_uri2),
         extension: None,
+        from: "hellp".to_string(),
+        to: "haj".to_string(),
+        denom: "pcrd".to_string(),
+        amount: 65,
     };
 
     contract
@@ -943,6 +983,10 @@ fn query_tokens_by_owner() {
         owner: demeter.clone(),
         token_uri: None,
         extension: None,
+        from: "hellp".to_string(),
+        to: "haj".to_string(),
+        denom: "pcrd".to_string(),
+        amount: 65,
     };
     contract
         .execute(deps.as_mut(), mock_env(), minter.clone(), mint_msg)
@@ -953,6 +997,10 @@ fn query_tokens_by_owner() {
         owner: ceres.clone(),
         token_uri: None,
         extension: None,
+        from: "hellp".to_string(),
+        to: "haj".to_string(),
+        denom: "pcrd".to_string(),
+        amount: 65,
     };
     contract
         .execute(deps.as_mut(), mock_env(), minter.clone(), mint_msg)
@@ -963,6 +1011,10 @@ fn query_tokens_by_owner() {
         owner: demeter.clone(),
         token_uri: None,
         extension: None,
+        from: "hellp".to_string(),
+        to: "haj".to_string(),
+        denom: "pcrd".to_string(),
+        amount: 65,
     };
     contract
         .execute(deps.as_mut(), mock_env(), minter, mint_msg)
@@ -1001,3 +1053,41 @@ fn query_tokens_by_owner() {
         .unwrap();
     assert_eq!(&by_demeter[1..], &tokens.tokens[..]);
 }
+
+
+// #[test]
+// fn transfer_plastic_credits() {
+
+//     let mut deps = mock_dependencies();
+//     let contract = setup_contract(deps.as_mut());
+
+//     // Mock information for the spender (owner of the credits)
+//     let spender_info = mock_info("venus", &[]);
+
+//     // Setup message for transferring credits
+//     let transfer_msg = ExecuteMsg::TransferCredit {
+//         from: String::from("venus"),
+//         to: String::from("random"),
+//         denom: String::from("plastic"),
+//         amount: 100,
+//         retire: false,
+//     };
+
+//     // Attempt to transfer credits
+//     let transfer_result = contract.execute(deps.as_mut(), mock_env(), spender_info, transfer_msg);
+
+//     // Assertions
+//     match transfer_result {
+//         Ok(response) => {
+//             // Check attributes and other response details
+//             assert_eq!(response.attributes, vec![
+//                 attr("action", "transfer_credit"),
+//                 attr("sender", "venus"),
+//                 attr("recipient", "random"),
+//                 attr("denom", "plastic"),
+//                 attr("amount", "100"),
+//             ]);
+//         },
+//         Err(err) => panic!("Transfer failed: {:?}", err),
+//     }
+// }

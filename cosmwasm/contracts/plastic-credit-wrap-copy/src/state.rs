@@ -20,6 +20,7 @@ where
     pub operators: Map<'a, (&'a Addr, &'a Addr), Expiration>,
     pub tokens: IndexedMap<'a, &'a str, TokenInfo<T>, TokenIndexes<'a, T>>,
     pub withdraw_address: Item<'a, String>,
+    pub plastic_credits: Map<'a, &'a str, PlasticCreditInfo>,
 
     pub(crate) _custom_response: PhantomData<C>,
     pub(crate) _custom_query: PhantomData<Q>,
@@ -50,6 +51,7 @@ where
             "tokens",
             "tokens__owner",
             "withdraw_address",
+            "plastic_credits"
         )
     }
 }
@@ -67,6 +69,7 @@ where
         tokens_key: &'a str,
         tokens_owner_key: &'a str,
         withdraw_address_key: &'a str,
+        plastic_credits_key: &'a str,
     ) -> Self {
         let indexes = TokenIndexes {
             owner: MultiIndex::new(token_owner_idx, tokens_key, tokens_owner_key),
@@ -77,6 +80,7 @@ where
             operators: Map::new(operator_key),
             tokens: IndexedMap::new(tokens_key, indexes),
             withdraw_address: Item::new(withdraw_address_key),
+            plastic_credits: Map::new(plastic_credits_key),
             _custom_response: PhantomData,
             _custom_execute: PhantomData,
             _custom_query: PhantomData,
@@ -115,6 +119,13 @@ pub struct TokenInfo<T> {
     /// You can add any custom metadata here when you extend cw721-base
     pub extension: T,
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct PlasticCreditInfo {
+    pub denom: String,
+    pub amount: u64,
+}
+
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct Approval {

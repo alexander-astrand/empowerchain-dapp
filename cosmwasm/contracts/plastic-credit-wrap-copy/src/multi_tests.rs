@@ -46,6 +46,10 @@ fn mint_transfer_and_burn(app: &mut App, cw721: Addr, sender: Addr, token_id: St
             owner: sender.to_string(),
             token_uri: None,
             extension: Empty::default(),
+            from: "hellp".to_string(),
+            to: "haj".to_string(),
+            denom: "pcrd".to_string(),
+            amount: 65,
         },
         &[],
     )
@@ -71,7 +75,7 @@ fn mint_transfer_and_burn(app: &mut App, cw721: Addr, sender: Addr, token_id: St
     app.execute_contract(
         Addr::unchecked("burner"),
         cw721,
-        &crate::ExecuteMsg::<Empty, Empty>::Burn { token_id },
+        &crate::ExecuteMsg::<Empty, Empty>::Burn { token_id, to: "haj".to_string(), denom: "pcrd".to_string(), amount: 65 },
         &[],
     )
     .unwrap();

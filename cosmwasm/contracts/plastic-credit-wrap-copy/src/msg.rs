@@ -64,18 +64,28 @@ pub enum ExecuteMsg<T, E> {
         token_uri: Option<String>,
         /// Any custom extension used by this contract
         extension: T,
+        
+        from: String,      // Making from optional
+        to: String,        // Making to optional
+        denom: String,     // Making denom optional
+        amount: u64,      // Making amount optional
     },
 
     /// Burn an NFT the sender has access to
-    Burn { token_id: String },
-
-    TransferCredit {
-        from: String,
+    Burn { 
+        token_id: String,
         to: String,
         denom: String,
         amount: u64,
-        retire: bool,
     },
+
+    // TransferCredit {
+    //     from: String,
+    //     to: String,
+    //     denom: String,
+    //     amount: u64,
+    //     retire: bool,
+    // },
 
     /// Extension msg
     Extension { msg: E },
@@ -87,6 +97,28 @@ pub enum ExecuteMsg<T, E> {
     /// Withdraw from the contract to the given address. Anyone can call this,
     /// which is okay since withdraw address has been set by owner.
     WithdrawFunds { amount: Coin },
+
+    // TransferCreditsFromContract {
+    //     to: String,
+    //     denom: String,
+    //     number_of_credits: u64,
+    // },
+
+    // TransferCreditsToContract {
+    //     from: String,
+    //     to: String,
+    //     denom: String,
+    //     amount: u64,
+    // },
+}
+
+#[cw_serde]
+pub struct TransferMsg {
+    pub from: String,
+    pub to: String,
+    pub denom: String,
+    pub amount: u64,
+    pub retire: bool,
 }
 
 #[cw_ownable_query]
