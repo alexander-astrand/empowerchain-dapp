@@ -243,7 +243,7 @@ where
     fn plastic_credit_info(
         &self,
         deps: Deps,
-        env: Env,
+        _env: Env,
         token_id: String,
     ) -> StdResult<PlasticCreditInfoResponse> {
         let info = self.plastic_credits.load(deps.storage, &token_id)?;

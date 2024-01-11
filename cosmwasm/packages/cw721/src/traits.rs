@@ -29,7 +29,7 @@ where
         info: MessageInfo,
         recipient: String,
         token_id: String,
-    ) -> Result<Response<C>, Self::Err>;
+    ) -> Result<Response, Self::Err>;
 
     fn send_nft(
         &self,
@@ -39,7 +39,7 @@ where
         contract: String,
         token_id: String,
         msg: Binary,
-    ) -> Result<Response<C>, Self::Err>;
+    ) -> Result<Response, Self::Err>;
 
     fn approve(
         &self,
@@ -49,7 +49,7 @@ where
         spender: String,
         token_id: String,
         expires: Option<Expiration>,
-    ) -> Result<Response<C>, Self::Err>;
+    ) -> Result<Response, Self::Err>;
 
     fn revoke(
         &self,
@@ -58,7 +58,7 @@ where
         info: MessageInfo,
         spender: String,
         token_id: String,
-    ) -> Result<Response<C>, Self::Err>;
+    ) -> Result<Response, Self::Err>;
 
     fn approve_all(
         &self,
@@ -67,7 +67,7 @@ where
         info: MessageInfo,
         operator: String,
         expires: Option<Expiration>,
-    ) -> Result<Response<C>, Self::Err>;
+    ) -> Result<Response, Self::Err>;
 
     fn revoke_all(
         &self,
@@ -75,7 +75,7 @@ where
         env: Env,
         info: MessageInfo,
         operator: String,
-    ) -> Result<Response<C>, Self::Err>;
+    ) -> Result<Response, Self::Err>;
 
     fn burn(
         &self,
@@ -83,7 +83,7 @@ where
         env: Env,
         info: MessageInfo,
         token_id: String,
-    ) -> Result<Response<C>, Self::Err>;
+    ) -> Result<Response, Self::Err>;
 }
 
 pub trait Cw721Query<T>

@@ -24,4 +24,7 @@ pub enum ContractError {
 
     #[error("No withdraw address set")]
     NoWithdrawAddress {},
+
+    #[error("Plastic Credit transfer failed")]
+    TransferFailed {},
 }

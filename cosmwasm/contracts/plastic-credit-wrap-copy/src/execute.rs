@@ -29,7 +29,7 @@ where
         _env: Env,
         _info: MessageInfo,
         msg: InstantiateMsg,
-    ) -> Result<Response<C>, ContractError> {
+    ) -> Result<Response, ContractError> {
         let contract_info = ContractInfoResponse {
             name: msg.name,
             symbol: msg.symbol,
@@ -52,7 +52,7 @@ where
         env: Env,
         info: MessageInfo,
         msg: ExecuteMsg<T, E>,
-    ) -> Result<Response<C>, ContractError> {
+    ) -> Result<Response, ContractError> {
         match msg {
             ExecuteMsg::Mint {
                 token_id,
@@ -120,7 +120,7 @@ where
         from: String,
         denom: String,
         amount: u64,
-    ) -> Result<Response<C>, ContractError> {
+    ) -> Result<Response, ContractError> {
         cw_ownable::assert_owner(deps.storage, &info.sender)?;
 
         let token = TokenInfo {
@@ -150,13 +150,17 @@ where
         );
         println!("contract address: {:?}", env.contract.address.to_string());
 
-        Self::create_transfer_credits_to_contract_msg(env, from, denom, amount);
+        let exec_transfer_msg =
+            Self::create_transfer_credits_to_contract_msg(env, from, denom.clone(), amount);
 
         Ok(Response::new()
-            .add_attribute("action", "mint")
+            .add_attribute("action", "Wrap plastic credit")
             .add_attribute("minter", info.sender)
             .add_attribute("owner", owner)
-            .add_attribute("token_id", token_id))
+            .add_attribute("token_id", token_id)
+            .add_attribute("Plastic Credit denom", denom.clone())
+            .add_attribute("Wrapped Credits", amount.to_string())
+            .add_message(exec_transfer_msg))
     }
 
     pub fn update_ownership(
@@ -164,7 +168,7 @@ where
         env: Env,
         info: MessageInfo,
         action: cw_ownable::Action,
-    ) -> Result<Response<C>, ContractError> {
+    ) -> Result<Response, ContractError> {
         let ownership = cw_ownable::update_ownership(deps, &env.block, &info.sender, action)?;
         Ok(Response::new().add_attributes(ownership.into_attributes()))
     }
@@ -174,7 +178,7 @@ where
         deps: DepsMut,
         sender: &Addr,
         address: String,
-    ) -> Result<Response<C>, ContractError> {
+    ) -> Result<Response, ContractError> {
         cw_ownable::assert_owner(deps.storage, sender)?;
         deps.api.addr_validate(&address)?;
         self.withdraw_address.save(deps.storage, &address)?;
@@ -187,7 +191,7 @@ where
         &self,
         storage: &mut dyn Storage,
         sender: &Addr,
-    ) -> Result<Response<C>, ContractError> {
+    ) -> Result<Response, ContractError> {
         cw_ownable::assert_owner(storage, sender)?;
         let address = self.withdraw_address.may_load(storage)?;
         match address {
@@ -205,7 +209,7 @@ where
         &self,
         storage: &mut dyn Storage,
         amount: &Coin,
-    ) -> Result<Response<C>, ContractError> {
+    ) -> Result<Response, ContractError> {
         let address = self.withdraw_address.may_load(storage)?;
         match address {
             Some(address) => {
@@ -240,7 +244,7 @@ where
         info: MessageInfo,
         recipient: String,
         token_id: String,
-    ) -> Result<Response<C>, ContractError> {
+    ) -> Result<Response, ContractError> {
         self._transfer_nft(deps, &env, &info, &recipient, &token_id)?;
 
         Ok(Response::new()
@@ -258,7 +262,7 @@ where
         contract: String,
         token_id: String,
         msg: Binary,
-    ) -> Result<Response<C>, ContractError> {
+    ) -> Result<Response, ContractError> {
         // Transfer token
         self._transfer_nft(deps, &env, &info, &contract, &token_id)?;
 
@@ -285,7 +289,7 @@ where
         spender: String,
         token_id: String,
         expires: Option<Expiration>,
-    ) -> Result<Response<C>, ContractError> {
+    ) -> Result<Response, ContractError> {
         self._update_approvals(deps, &env, &info, &spender, &token_id, true, expires)?;
 
         Ok(Response::new()
@@ -302,7 +306,7 @@ where
         info: MessageInfo,
         spender: String,
         token_id: String,
-    ) -> Result<Response<C>, ContractError> {
+    ) -> Result<Response, ContractError> {
         self._update_approvals(deps, &env, &info, &spender, &token_id, false, None)?;
 
         Ok(Response::new()
@@ -319,7 +323,7 @@ where
         info: MessageInfo,
         operator: String,
         expires: Option<Expiration>,
-    ) -> Result<Response<C>, ContractError> {
+    ) -> Result<Response, ContractError> {
         // reject expired data as invalid
         let expires = expires.unwrap_or_default();
         if expires.is_expired(&env.block) {
@@ -343,7 +347,7 @@ where
         _env: Env,
         info: MessageInfo,
         operator: String,
-    ) -> Result<Response<C>, ContractError> {
+    ) -> Result<Response, ContractError> {
         let operator_addr = deps.api.addr_validate(&operator)?;
         self.operators
             .remove(deps.storage, (&info.sender, &operator_addr));
@@ -360,7 +364,7 @@ where
         env: Env,
         info: MessageInfo,
         token_id: String,
-    ) -> Result<Response<C>, ContractError> {
+    ) -> Result<Response, ContractError> {
         let token = self.tokens.load(deps.storage, &token_id)?;
         self.check_can_send(deps.as_ref(), &env, &info, &token)?;
 
@@ -373,14 +377,15 @@ where
         let to = token.owner.to_string();
 
         println!("token owner: {:?}", to);
+        let execute_msg = Self::create_transfer_credits_from_contract_msg(env, to, denom, amount);
 
-        Self::create_transfer_credits_from_contract_msg(env, to, denom, amount);
-
-        Ok(Response::new().add_attributes(vec![
-            ("action", "burn"),
-            ("sender", &info.sender.to_string()),
-            ("token_id", &token_id),
-        ]))
+        Ok(Response::new()
+            .add_attributes(vec![
+                ("action", "burn"),
+                ("sender", &info.sender.to_string()),
+                ("token_id", &token_id),
+            ])
+            .add_message(execute_msg))
     }
 }
 
@@ -548,6 +553,8 @@ where
         denom: String,
         amount: u64,
     ) -> CosmosMsg {
+        println!("to: {:?}", to);
+        println!("denom: {:?}", denom);
         let transfer_to_buyer_msg = MsgTransferCredits {
             from: env.contract.address.to_string(),
             to,
