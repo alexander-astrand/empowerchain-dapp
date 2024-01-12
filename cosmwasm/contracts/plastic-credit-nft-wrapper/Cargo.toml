@@ -1,5 +1,5 @@
 [package]
-name          = "plastic-credit-wrapper"
+name          = "plastic-credit-nft-wrapper"
 description   = "Basic implementation cw721 NFTs"
 authors       = [
   "Ethan Frey <ethanfrey@users.noreply.github.com>",

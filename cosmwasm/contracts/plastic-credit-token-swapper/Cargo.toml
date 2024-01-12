@@ -1,0 +1,37 @@
+[package]
+name = "plastic-credit-nft-swapper"
+version = {workspace = true}
+authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
+edition = "2021"
+description = "Basic implementation of a CosmWasm-20 compliant token"
+license = {workspace = true}
+repository = {workspace = true}
+homepage = {workspace = true}
+documentation = {workspace = true}
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+backtraces = ["cosmwasm-std/backtraces"]
+# use library feature to disable all instantiate/execute/query exports
+library = []
+
+[dependencies]
+cosmwasm-schema = {workspace = true}
+cw2 = { path = "../../packages/cw2", version = "1.1.2" }
+cw20 = { path = "../../packages/cw20", version = "1.1.2" }
+cw20-base = "1.1.2"
+cw-storage-plus = {workspace = true}
+cosmwasm-std = {workspace = true}
+schemars = {workspace = true}
+semver = "1"
+serde = {workspace = true}
+thiserror = {workspace = true}
+cw-multi-test = {workspace = true}
+cw-utils = {workspace = true}
+prost = { workspace = true }
+prost-types = { workspace = true }
+cosmos-sdk-proto = { workspace = true, default-features = false }
+
+
