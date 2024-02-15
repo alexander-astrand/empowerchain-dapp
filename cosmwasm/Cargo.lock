@@ -254,8 +254,22 @@ dependencies = [
 ]
 
 [[package]]
+<<<<<<< HEAD
 name = "cw-ownable"
 version = "0.5.1"
+=======
+name = "cw-storage-macro"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "853c8ebf6d20542ea0dc57519ee458e7ee0caa3a1848beced2c603153d3f4dbe"
+dependencies = [
+ "syn",
+]
+
+[[package]]
+name = "cw-storage-plus"
+version = "1.0.1"
+>>>>>>> upstream/main
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "093dfb4520c48b5848274dd88ea99e280a04bc08729603341c7fb0d758c74321"
 dependencies = [
@@ -798,7 +812,12 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test",
+<<<<<<< HEAD
  "cw-storage-plus 1.2.0",
+=======
+ "cw-storage-macro",
+ "cw-storage-plus",
+>>>>>>> upstream/main
  "fee-splitter",
  "prost 0.11.9",
  "prost-types",

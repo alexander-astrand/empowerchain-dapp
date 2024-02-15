@@ -14,9 +14,9 @@ import {
   findPlasticTypeInMaterial,
 } from "@/utils/utils";
 import { useQuery } from "@vue/apollo-composable";
-import gql from "graphql-tag";
-import { onMounted, ref, watch } from "vue";
-import { toast } from "vue3-toastify";
+import { ref, watch, computed } from "vue";
+import { GET_MARKETPLACE_LISTING } from "@/graphql/queries";
+import tracking, { PageViewEvents } from "@/utils/analytics";
 
 interface AuctionDetails {
   applicant: string;
@@ -28,17 +28,18 @@ interface AuctionDetails {
     url: string;
     name: string;
   }[];
-  locationPointers: {
-    lat: number;
-    lng: number;
-  }[];
+  locationPointers:
+    | null
+    | {
+        lat: number;
+        lng: number;
+      }[];
   registrationDate: string;
 }
 
-const router = useRoute();
+const route = useRoute();
 
 const data = ref();
-const orderHistory = ref();
 const showSpinner = ref(true);
 const denom = ref("");
 const owner = ref("");
@@ -49,11 +50,14 @@ const auctionDetails = ref<AuctionDetails>({
   volume: 0,
   image: [""],
   file: [{ url: "", name: "" }],
-  locationPointers: [{ lat: 0, lng: 0 }],
+  locationPointers: null,
   registrationDate: "",
 });
 const pricePerCreditDenom = ref("");
 const plasticType = ref("");
+const currentId = computed(() => {
+  return route.params.id as string;
+});
 
 const getDetailsList = (data: any, materialVolume: number) => {
   const applicantArray: string[] = [];
@@ -108,97 +112,35 @@ const getDetailsList = (data: any, materialVolume: number) => {
   };
 };
 
-const copyToken = async (text: string) => {
-  await navigator.clipboard.writeText(text);
-  toast.success("Copied to clipboard");
-};
-
 const getAuctionDetails = (id: string | string[]) => {
-  let query = `query {
-  marketplaceListings(
-    filter: { id:{equalTo:"${id}"} }
-  ) {
-    totalCount
-    nodes {
-      id
-      amount
-      initialAmount
-      denom
-      owner
-      pricePerCreditAmount
-      pricePerCreditDenom
-      creditCollection {
-        activeAmount
-        retiredAmount
-        creditType
-        creditData {
-          nodes {
-            mediaFiles{
-              nodes{
-                name
-                url
-              }
-            }
-            binaryFiles{
-              nodes{
-                name
-                url
-              }
-            }
-            eventData {
-              nodes {
-                magnitude
-                registrationDate
-                amount
-                country
-                latitude
-                longitude
-                material {
-                  nodes {
-                    key
-                    value
-                  }
-                }
-              }
-            }
-            applicantDataByCreditDataId {
-              nodes {
-                name
-                description
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-`;
-
-  const { result, loading, error, refetch } = useQuery(gql`
-    ${query}
-  `);
+  const { result, loading, error, onResult } = useQuery(
+    GET_MARKETPLACE_LISTING,
+    {
+      id: id,
+    },
+    {
+      pollInterval: 5000,
+      fetchPolicy: "no-cache",
+    },
+  );
   data.value = {
     result,
     loading,
     error,
   };
-  setInterval(() => {
-    refetch();
-  }, 5000);
 
-  watch(result, (value) => {
+  onResult(({ data }) => {
     auctionDetails.value = getDetailsList(
-      value.marketplaceListings?.nodes[0].creditCollection.creditData.nodes,
+      data.marketplaceListings?.nodes[0].creditCollection.creditData.nodes,
       parseInt(
-        value.marketplaceListings?.nodes[0].creditCollection.activeAmount,
+        data.marketplaceListings?.nodes[0].creditCollection.activeAmount,
       ) +
         parseInt(
-          value.marketplaceListings?.nodes[0].creditCollection.retiredAmount,
+          data.marketplaceListings?.nodes[0].creditCollection.retiredAmount,
         ),
     );
     pricePerCreditDenom.value =
-      value.marketplaceListings?.nodes[0].pricePerCreditDenom;
+      data.marketplaceListings?.nodes[0].pricePerCreditDenom;
   });
 
   showSpinner.value = false;
@@ -206,44 +148,13 @@ const getAuctionDetails = (id: string | string[]) => {
   owner.value = result.value?.marketplaceListings?.nodes[0].owner;
 };
 
-const getOrderHistory = (id: string | string[]) => {
-  let owner = id.toString().split("-")[0];
-  let denom = id.toString().split("-")[1];
-
-  let query = `query {
-  buyCreditsWasmEvents(filter:{
-    denom:{equalTo:"${denom}"},
-    listingOwner:{equalTo:"${owner}"}
-  }){
-    nodes{
-      totalPriceAmount
-      totalPriceDenom
-      listingOwner
-      denom
-      buyer
-      numberOfCreditsBought
-      saleDate
-    }
+const handlePageLoadAndCollectionIdChange = (newId: string, oldId?: string) => {
+  if (newId && newId !== oldId) {
+    getAuctionDetails(newId);
   }
-}`;
-
-  const { result, loading, error, refetch } = useQuery(gql`
-    ${query}
-  `);
-
-  watch(result, () => {
-    orderHistory.value = { result, loading, error };
-  });
-
-  setInterval(() => {
-    refetch();
-  }, 5000);
 };
 
-onMounted(() => {
-  getAuctionDetails(router.params.id);
-  getOrderHistory(router.params.id);
-});
+watch(currentId, handlePageLoadAndCollectionIdChange, { immediate: true });
 </script>
 <template>
   <CustomSpinner :visible="showSpinner" />
@@ -354,51 +265,6 @@ onMounted(() => {
           <a target="_blank" :href="file.url">{{ file.name }}</a>
         </li>
       </ul>
-    </div>
-
-    <!--    Order Buy History-->
-    <div class="bg-lightBlack p-6 mt-5 rounded-sm">
-      <p class="text-title18 font-semibold mb-3">Order buy history</p>
-
-      <div class="divide-y md:divide-none divide-dividerGray">
-        <div
-          class="md:p-2 py-2 md:flex md:justify-between flex-wrap"
-          :class="index % 2 === 0 ? 'md:bg-lightBlack' : null"
-          v-for="(data, index) in orderHistory?.result?.buyCreditsWasmEvents
-            ?.nodes"
-          :key="data"
-        >
-          <div class="flex flex-row justify-between flex-wrap">
-            <div
-              class="flex flex-col md:flex-row text-title12 md:text-title14 flex-wrap break-words max-w-[70%] md:max-w-fit"
-            >
-              <p class="text-textInfoGray whitespace-nowrap overflow-hidden">
-                {{ new Date(data?.saleDate).toLocaleString() }}
-              </p>
-              <p
-                class="text-greenPrimary md:ml-16 text-ellipsis whitespace-nowrap overflow-hidden max-w-full cursor-pointer"
-                @click="copyToken(data.buyer)"
-              >
-                {{ data.buyer }}
-              </p>
-            </div>
-            <div class="flex">
-              <button
-                class="btn btn-ghost bg-transparent p-0 md:hidden"
-                @click="copyToken(data.buyer)"
-              >
-                <img src="../assets/copyIcon.svg" />
-              </button>
-            </div>
-          </div>
-          <div class="flex justify-between text-title14 text-textInfoGray">
-            <p>{{ data.numberOfCreditsBought }} {{ data.denom }}</p>
-            <p class="md:ml-16">
-              {{ data.totalPriceAmount }} {{ data.totalPriceDenom }}
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>

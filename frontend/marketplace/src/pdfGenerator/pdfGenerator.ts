@@ -7,6 +7,10 @@ import {
   leaf1,
   horizontalLeafs,
   verticalLeafs,
+  greenLogo,
+  openSans,
+  openSansBold,
+  interRegular,
 } from "../pdfGenerator/AssetsBase64";
 import {
   addTextWithSpacing,
@@ -36,6 +40,8 @@ const addedMediaFiles = ref(false);
 const addedMaterialData = ref(false);
 const addedLocations = ref(false);
 const xPosition = ref(0);
+const fontOpenSans = "Open Sans";
+const fontInter = "Inter";
 
 export const generatePDF = (
   certificateData: CreditOffsetCertificate,
@@ -52,7 +58,9 @@ export const generatePDF = (
   applicantDataDescription: string,
   qrCodeUrl: string | undefined,
 ) => {
-  const doc = new jsPDF("landscape") as IjsPDF;
+  //To compress the PDF size
+  const doc = new jsPDF("landscape", undefined, undefined, true) as IjsPDF;
+  addFonts(doc);
   addGrayPadding(doc);
   addGreenRectanglePage1(doc);
   addImagesPage1(doc);
@@ -78,7 +86,61 @@ export const generatePDF = (
     creditData,
     applicantDataDescription,
   );
+  addFinalPage(doc);
   doc.save("certificate.pdf");
+};
+
+const addFonts = (doc: IjsPDF) => {
+  if (openSans) {
+    doc.addFileToVFS("OpenSans-Regular.ttf", openSans);
+  }
+  if (openSansBold) {
+    doc.addFileToVFS("OpenSans-Bold.ttf", openSans);
+  }
+  if (interRegular) {
+    doc.addFileToVFS("Inter-Regular.ttf", interRegular);
+  }
+  doc.addFont("OpenSans-Regular.ttf", fontOpenSans, "regular");
+  doc.addFont("OpenSans-Bold.ttf", fontOpenSans, "bold");
+  doc.addFont("Inter-Regular.ttf", fontInter, "regular");
+};
+
+const addFinalPage = (doc: IjsPDF) => {
+  doc.addPage("a4", "portrait");
+  addGrayPadding(doc);
+  doc.addImage(verticalLeafs, "png", 0, 0, 210, 297);
+  doc.addImage(leaf1, "png", 30, 23, 10, 8);
+
+  doc.setFontSize(12);
+  doc.setTextColor(35, 31, 32);
+  doc.setFont(fontOpenSans, "regular");
+
+  doc.text(
+    `
+    This certificate is issued by Empower.
+
+    Blockchain technology ensures the transparency and integrity of this certificate.
+    Each transaction is recorded on a decentralized and immutable ledger, providing a
+    clear audit trail. This guarantees that each credit is unique, cannot be
+    double-counted, and its environmental impact is accurately represented.
+
+    Read more at https://www.empower.eco
+  `,
+    doc.internal.pageSize.width / 2,
+    doc.internal.pageSize.height / 2 - 72,
+    {
+      align: "center",
+    },
+  );
+
+  doc.addImage(
+    greenLogo,
+    "png",
+    doc.internal.pageSize.width / 2 - 5,
+    60,
+    10,
+    10,
+  );
 };
 
 const addGrayPadding = (doc: IjsPDF) => {
@@ -98,10 +160,12 @@ const addGreenRectanglePage1 = (doc: IjsPDF) => {
 
   doc.setFillColor(219, 231, 214);
 
-  const x = 40;
-  const y = 60;
+  const x = 80.58;
+  const y = 56;
+  const paddingToTheLeft = 80.58;
+  const paddingToTheRight = 10.58;
 
-  const rectWidth = pageWidth;
+  const rectWidth = pageWidth - paddingToTheLeft - paddingToTheRight;
   const rectHeight = 90;
 
   doc.rect(x, y, rectWidth, rectHeight, "F");
@@ -117,7 +181,7 @@ const addImagesPage1 = (doc: IjsPDF) => {
 const addHeaderPage1 = (doc: IjsPDF) => {
   doc.setFontSize(28);
   doc.setTextColor(32, 105, 72);
-  doc.setFont("Open Sans", "bold");
+  doc.setFont(fontOpenSans, "bold");
   doc.text("plastic credit", 152, 28);
 
   doc.setTextColor(0, 0, 0);
@@ -138,18 +202,38 @@ const addCertificateHolderPage1 = (
 ) => {
   doc.setFontSize(15);
   doc.setTextColor(35, 31, 32);
-  doc.setFont("inter", "normal");
+  doc.setFont(fontInter, "regular");
   addTextWithSpacing(doc, "PROUDLY PRESENTED TO", 142, 75, 0.5);
 
   const name = certificateData.retiringEntityName || "N/A";
-  const yPos = 95;
+  const yPos = 91;
 
   const { xPos, fontSize } = calculateTextProperties(name);
 
   doc.setFontSize(fontSize);
   doc.setTextColor(88, 185, 71);
-  doc.setFont("Open Sans", "bold");
+  doc.setFont(fontOpenSans, "regular");
   doc.text(name, xPos, yPos);
+
+  doc.setFontSize(10);
+  doc.setTextColor(35, 31, 32);
+  const logoWidth = 5;
+  doc.text(
+    "Certificate issued by Empower",
+    doc.internal.pageSize.width / 2 + 35 - logoWidth - 4,
+    doc.internal.pageSize.height - 12,
+    {
+      align: "center",
+    },
+  );
+  doc.addImage(
+    greenLogo,
+    "png",
+    doc.internal.pageSize.width / 2 + 35 + 13 + logoWidth,
+    doc.internal.pageSize.height - 17,
+    logoWidth,
+    logoWidth,
+  );
 };
 
 const addHorizontalLongLinePage1 = (doc: IjsPDF) => {
@@ -166,7 +250,7 @@ const addCertificateDetailsPage1 = (
 ) => {
   doc.setFontSize(15);
   doc.setTextColor(35, 31, 32);
-  doc.setFont("inter", "normal");
+  doc.setFont(fontInter, "regular");
   // addTextWithSpacing(doc, "FOR OFFSETTING", 154, 110, 0.5);
   addTextWithSpacing(doc, "FOR MAKING AN IMPACT", 143, 110, 0.5);
   addTextWithSpacing(doc, "BY NEUTRALIZING AN IMPRESSIVE", 128, 116, 0.5);
@@ -175,12 +259,12 @@ const addCertificateDetailsPage1 = (
 
   doc.setFontSize(15);
   doc.setTextColor(35, 31, 32);
-  doc.setFont("inter", "normal");
+  doc.setFont(fontInter, "regular");
   addTextWithSpacing(doc, "OF", 176, 132, 0.5);
 
   doc.setFontSize(15);
   doc.setTextColor(32, 105, 72);
-  doc.setFont("Open Sans", "bold");
+  doc.setFont(fontOpenSans, "bold");
   doc.text(weightText, xPosition.value, 124);
 
   const plasticText = plastciValuesString || "N/A";
@@ -188,7 +272,7 @@ const addCertificateDetailsPage1 = (
 
   doc.setFontSize(15);
   doc.setTextColor(32, 105, 72);
-  doc.setFont("Open Sans", "bold");
+  doc.setFont(fontOpenSans, "bold");
   doc.text(plasticText, xPosition.value, 140);
 };
 
@@ -197,16 +281,24 @@ const addCirularImagePage1 = (
   ID: string,
   qrCodeUrl: string | undefined,
 ) => {
-  doc.addImage(circular, "png", 160, 155, 40, 40);
+  const startY = 151;
+  const textY = startY + 20;
+  const qrY = startY + 9;
+
+  doc.addImage(circular, "png", 160, startY, 40, 40);
   doc.setFontSize(15);
   doc.setTextColor(0, 0, 0);
-  doc.setFont("Open Sans", "bold");
-  doc.text(ID, 174, 175);
+  doc.setFont(fontOpenSans, "bold");
+  doc.text(ID, 174, textY);
   doc.setTextColor(88, 185, 71);
   doc.setFontSize(12);
   if (qrCodeUrl) {
-    doc.addImage(qrCodeUrl, "svg", 168, 164, 23, 23);
+    doc.addImage(qrCodeUrl, "svg", 168, qrY, 23, 23);
   }
+  //Hyperlink the QR
+  doc.link(168, qrY, 20, 20, {
+    url: "https://www.empowerchain.io/",
+  });
 };
 
 const addVerticalImagesPage2 = (doc: IjsPDF) => {
@@ -217,15 +309,15 @@ const addVerticalImagesPage2 = (doc: IjsPDF) => {
 };
 
 const addHeaderPage2 = (doc: IjsPDF) => {
-  doc.setFontSize(25);
+  doc.setFontSize(23);
   doc.setTextColor(32, 105, 72);
-  doc.setFont("Open Sans", "normal");
+  doc.setFont(fontOpenSans, "regular");
   doc.text("plastic credit", 45, 30);
   doc.setTextColor(0, 0, 0);
-  doc.setFont("Open Sans", "bold");
-  doc.text("certificate", 93, 30);
-  doc.setFont("Open Sans", "normal");
-  doc.text("details", 133, 30);
+  doc.setFont(fontOpenSans, "bold");
+  doc.text("certificate", 95, 30);
+  doc.setFont(fontOpenSans, "regular");
+  doc.text("details", 135, 30);
 };
 
 const addCertificateHodlerPage2 = (
@@ -234,16 +326,16 @@ const addCertificateHodlerPage2 = (
 ) => {
   doc.setFontSize(15);
   doc.setTextColor(32, 105, 72);
-  doc.setFont("Open Sans", "bold");
+  doc.setFont(fontOpenSans, "bold");
   doc.text("Name of Certificate Holder:", 20, 44);
   doc.setTextColor(0, 0, 0);
-  doc.text(certificateData.retiringEntityName, 84, 44);
+  doc.text(certificateData.retiringEntityName, 90, 44);
 };
 
 const addTitle = (doc: IjsPDF, title: string, yPosition: number) => {
   doc.setFontSize(15);
   doc.setTextColor(32, 105, 72);
-  doc.setFont("Open Sans", "bold");
+  doc.setFont(fontOpenSans, "bold");
   doc.text(title, 20, yPosition);
   return yPosition + 5;
 };
@@ -576,7 +668,7 @@ const addTableWithLinks = (
         if (url) {
           doc.setTextColor(0, 0, 0);
           doc.setFontSize(11);
-          doc.setFont("Inter", "normal");
+          doc.setFont(fontInter, "regular");
           const textWidth = doc.getTextWidth(url);
           const textPosX = data.cell.x + (data.cell.width - textWidth) / 2;
           const textPosY = data.cell.y + data.cell.height / 1.5;
@@ -655,7 +747,7 @@ const addAllTables = (
 
       doc.text(title, 20, yPosition);
       doc.setFontSize(12);
-      doc.setFont("Inter", "normal");
+      doc.setFont(fontInter, "regular");
       doc.setTextColor(0, 0, 0);
 
       // Prepare for Description

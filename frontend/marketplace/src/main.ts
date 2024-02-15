@@ -26,6 +26,7 @@ import {
   PC_BACKEND_ENDPOINT,
 } from "@/config/config";
 import { createLogto, type LogtoConfig } from "@logto/vue";
+import "@/utils/analytics";
 
 const cache = new InMemoryCache();
 const apolloClient = new ApolloClient({
@@ -37,7 +38,7 @@ const app = createApp(App);
 const logtoConfig: LogtoConfig = {
   endpoint: LOGTO_ENDPOINT,
   appId: LOGTO_APP_ID,
-  scopes: ["email"],
+  scopes: ["email", "custom_data"],
   resources: [PC_BACKEND_ENDPOINT],
 };
 

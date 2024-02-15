@@ -29,7 +29,7 @@ export interface BuyCreditsProps {
 }
 
 const { isAuthenticated, getAccessToken } = useAuth();
-const { isWalletConnected } = useWallet();
+const { isWalletConnected, address: walletAddress } = useWallet();
 const { notifyer } = useNotifyer();
 const amount = ref<number>(1);
 const props = defineProps<BuyCreditsProps>();
@@ -37,6 +37,7 @@ const showButtonSpinner = ref(false);
 const insufficientBalance = ref(false);
 const coinFormatted = ref("");
 const currentBalance = ref(Number.MAX_SAFE_INTEGER);
+
 const availableCreditsString = computed<string>(() => {
   return `${props.availableCredits}/${props.initialCredits}`;
 });
@@ -89,8 +90,8 @@ const checkBalanceForPurchase = (amount: number) => {
   }
 };
 
-const handleBuyCredits = async () => {
-  if (!isWalletConnected.value) {
+const handleBuyCredits = async (retirererName: string) => {
+  if (!isWalletConnected.value || !walletAddress.value) {
     notifyer.error("Please connect to wallet");
     return;
   }
@@ -124,6 +125,8 @@ const handleBuyCredits = async () => {
         denom: props.denom,
         owner: props.owner,
         numberOfCreditsToBuy: amount.value,
+        retire: true,
+        retiringEntityName: retirererName,
       },
       fee,
       "",
@@ -135,7 +138,9 @@ const handleBuyCredits = async () => {
       ],
     );
     if (res) {
-      notifyer.success("Purchase was successful");
+      notifyer.success(
+        "Retired credits successfully and generated a certificate",
+      );
     }
   } catch (error) {
     console.error(error);
@@ -153,7 +158,7 @@ const checkIfCreditsAvailable = () => {
   return true;
 };
 
-const handleCardPayment = async () => {
+const handleCardPayment = async (retirererName: string) => {
   if (!checkIfCreditsAvailable()) {
     return;
   }
@@ -171,6 +176,7 @@ const handleCardPayment = async () => {
     amount: amount.value,
     denom: props.denom,
     listingOwner: props.owner,
+    retirererName: retirererName,
   };
   try {
     const accessToken = await getAccessToken(PC_BACKEND_ENDPOINT);
@@ -185,7 +191,7 @@ const handleCardPayment = async () => {
     const paymentGatewayLink = await response.text();
     window.location.href = paymentGatewayLink;
   } catch (error) {
-    console.error(error);
+    console.error("Custom error", error);
     notifyer.error("This API call is not implemented yet"); // TODO: handle error
   } finally {
     showButtonSpinner.value = false;
@@ -193,6 +199,17 @@ const handleCardPayment = async () => {
 };
 </script>
 <template>
+  <div
+    v-if="showButtonSpinner"
+    class="fixed inset-0 flex items-center justify-center z-50 bg-black opacity-80 md:hidden"
+  >
+    <div class="text-center">
+      <span class="loading loading-spinner"></span>
+      <p class="text-title24 lg:text-title32 text-white">
+        Processing transaction
+      </p>
+    </div>
+  </div>
   <div
     class="bg-darkGray md:flex-row flex md:justify-between flex-col gap-1 lg:gap-x-12 p-6 rounded-sm flex-wrap"
   >

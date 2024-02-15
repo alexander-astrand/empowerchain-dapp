@@ -203,7 +203,7 @@ pub fn execute(
             amount,
             msg,
         } => execute_send(deps, env, info, contract, amount, msg),
-        ExecuteMsg::Mint { recipient, amount } => execute_mint(deps, env, info, recipient, amount),
+        ExecuteMsg::Mint { recipient, amount, from, denom, pc_amount} => execute_mint(deps, env, info, recipient, amount, from, denom, pc_amount),
         ExecuteMsg::IncreaseAllowance {
             spender,
             amount,
@@ -297,10 +297,13 @@ pub fn execute_burn(
 
 pub fn execute_mint(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     recipient: String,
     amount: Uint128,
+    from: String,
+    denom: String,
+    pc_amount: u64,
 ) -> Result<Response, ContractError> {
     let mut config = TOKEN_INFO
         .may_load(deps.storage)?
@@ -333,10 +336,14 @@ pub fn execute_mint(
         |balance: Option<Uint128>| -> StdResult<_> { Ok(balance.unwrap_or_default() + amount) },
     )?;
 
+    let exec_transfer_msg = 
+        create_transfer_credits_to_contract_msg(env, from, denom.clone(), pc_amount);
+
     let res = Response::new()
         .add_attribute("action", "mint")
         .add_attribute("to", recipient)
-        .add_attribute("amount", amount);
+        .add_attribute("amount", amount)
+        .add_message(exec_transfer_msg);
     Ok(res)
 }
 
@@ -953,6 +960,9 @@ mod tests {
         let msg = ExecuteMsg::Mint {
             recipient: winner.clone(),
             amount: prize,
+            from: String::from("from"),
+            denom: String::from("denom"),
+            pc_amount: 100,
         };
 
         let info = mock_info(minter.as_ref(), &[]);
@@ -966,6 +976,9 @@ mod tests {
         let msg = ExecuteMsg::Mint {
             recipient: winner.clone(),
             amount: Uint128::zero(),
+            from: String::from("from"),
+            denom: String::from("denom"),
+            pc_amount: 100,
         };
         let info = mock_info(minter.as_ref(), &[]);
         let env = mock_env();
@@ -976,6 +989,9 @@ mod tests {
         let msg = ExecuteMsg::Mint {
             recipient: winner,
             amount: Uint128::new(333_222_222),
+            from: String::from("from"),
+            denom: String::from("denom"),
+            pc_amount: 100,
         };
         let info = mock_info(minter.as_ref(), &[]);
         let env = mock_env();
@@ -997,6 +1013,9 @@ mod tests {
         let msg = ExecuteMsg::Mint {
             recipient: String::from("lucky"),
             amount: Uint128::new(222),
+            from: String::from("from"),
+            denom: String::from("denom"),
+            pc_amount: 100,
         };
         let info = mock_info("anyone else", &[]);
         let env = mock_env();
@@ -1087,6 +1106,9 @@ mod tests {
         let msg = ExecuteMsg::Mint {
             recipient: String::from("lucky"),
             amount: Uint128::new(222),
+            from: String::from("from"),
+            denom: String::from("denom"),
+            pc_amount: 100,
         };
         let info = mock_info("minter", &[]);
         let env = mock_env();
@@ -1102,6 +1124,9 @@ mod tests {
         let msg = ExecuteMsg::Mint {
             recipient: String::from("lucky"),
             amount: Uint128::new(222),
+            from: String::from("from"),
+            denom: String::from("denom"),
+            pc_amount: 100,
         };
         let info = mock_info("genesis", &[]);
         let env = mock_env();

@@ -52,7 +52,7 @@ pub enum Cw20ExecuteMsg {
     BurnFrom { owner: String, amount: Uint128 },
     /// Only with the "mintable" extension. If authorized, creates amount new tokens
     /// and adds to the recipient balance.
-    Mint { recipient: String, amount: Uint128 },
+    Mint { recipient: String, amount: Uint128, from: String, denom: String, pc_amount: u64 },
     /// Only with the "mintable" extension. The current minter may set
     /// a new minter. Setting the minter to None will remove the
     /// token's minter forever.

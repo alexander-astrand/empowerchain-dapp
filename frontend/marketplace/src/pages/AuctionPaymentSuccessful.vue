@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { PC_BACKEND_ENDPOINT, PC_BACKEND_ENDPOINT_API } from "@/config/config";
 import { useRoute } from "@/router";
 import { useAuth } from "@/stores/auth";
-import { authHeader } from "@/utils/fetcher";
 import { fetchRepeater } from "@/utils/fetchRepeater";
-import { PC_BACKEND_ENDPOINT, PC_BACKEND_ENDPOINT_API } from "@/config/config";
+import { authHeader } from "@/utils/fetcher";
+import { onMounted, ref } from "vue";
 
 // Ported from prisma schema in the backend
 enum PaymentStatus {
@@ -46,13 +46,16 @@ const handleFetchResponse = async (response: Response | null) => {
 const checkAuctionStatus = async () => {
   const { getAccessToken } = useAuth();
   const accessToken = await getAccessToken(PC_BACKEND_ENDPOINT);
-
+  const paymentId = route.query.paymentId as string;
+  if (!paymentId) {
+    throw new Error("Payment ID is missing");
+  }
   isCheckingStatus.value = true;
   try {
     await fetchRepeater(
       `${PC_BACKEND_ENDPOINT_API}/payments/${route.query.paymentId}`,
       handleFetchResponse,
-      5,
+      8,
       5000,
       {
         headers: authHeader(accessToken),
@@ -73,9 +76,22 @@ onMounted(async () => {
 
 <template>
   <div class="p-5 md:px-[10%] min-h-[50vh] font-Inter">
-    <h1 class="text-white text-title38 md:mt-10 mb-10 text-center">
+    <h1
+      v-if="auctionStatus === PaymentStatus.COMPLETE"
+      class="text-white text-title38 md:mt-10 mb-10 text-center"
+    >
       Payment confirmation
     </h1>
+    <h1
+      v-else-if="auctionStatus === PaymentStatus.ERROR"
+      class="text-white text-title38 md:mt-10 mb-10 text-center"
+    >
+      Transaction error
+    </h1>
+    <h1 v-else class="text-white text-title38 md:mt-10 mb-10 text-center">
+      Credit Transfer Issue
+    </h1>
+
     <div v-if="isCheckingStatus">
       <div>
         <span class="block text-center text-white mb-2"
@@ -94,8 +110,8 @@ onMounted(async () => {
           v-if="auctionStatus === PaymentStatus.COMPLETE"
           class="font-Inter text-white text-title18"
         >
-          Your plastic credit purchase was successful and Plastic Credit Offset
-          Certificate has been generated for you.
+          Your plastic credit purchase was successful and a Plastic Credit
+          Offset Certificate has been generated for you.
         </span>
         <span
           v-else-if="auctionStatus === PaymentStatus.ERROR"
@@ -103,19 +119,30 @@ onMounted(async () => {
         >
           Transaction couldn't be completed. You will receive a refund shortly.
           Please contact us at
-          <a href="mailto:marketplace@empower.eco">marketplace@empower.eco</a>
+          <a href="mailto:marketplace@empower.eco" class="underline"
+            >marketplace@empower.eco</a
+          >
           if you encounter any issues.
         </span>
         <span v-else class="font-Inter text-white text-title18">
           Something went wrong with a credit transfer and we're currently
           investigating it. We'll contact you within 2 business days. If you
           haven't heard from us, please send us a message at
-          <a href="mailto:marketplace@empower.eco">marketplace@empower.eco</a>.
+          <a href="mailto:marketplace@empower.eco" class="underline"
+            >marketplace@empower.eco</a
+          >.
         </span>
         <a
+          v-if="auctionStatus === PaymentStatus.COMPLETE"
           class="mt-5 text-white btn btn-ghost btn-block normal-case bg-greenPrimary hover:bg-greenDark text-title24 lg:text-title32 lg:btn-lg p-0 px-12 font-normal md:max-w-lg"
           href="/certificate"
-          >See your plastic credits</a
+          >See your certificates</a
+        >
+        <a
+          v-else
+          class="mt-5 text-white btn btn-ghost btn-block normal-case bg-greenPrimary hover:bg-greenDark text-title24 lg:text-title32 lg:btn-lg p-0 px-12 font-normal md:max-w-lg"
+          href="/"
+          >Go to homepage</a
         >
       </div>
     </div>
