@@ -13,16 +13,10 @@ rust-version  = "1.65"
 license       = "Apache-2.0"
 
 [workspace.dependencies]
-<<<<<<< HEAD
 cosmwasm-schema = "1.5.0"
 cosmwasm-std = { version = "1.5.0", features = ["stargate"] }
 cw-storage-plus = "1.2.0"
-=======
-cosmwasm-schema = "1.1.9"
-cosmwasm-std = "1.1.9"
-cw-storage-plus = "1.0.1"
 cw-storage-macro = "1.0.1"
->>>>>>> upstream/main
 serde = { version = "1.0.151", features = ["derive"] }
 thiserror = "1.0.38"
 cosmos-sdk-proto = { version = "0.16", default-features = false }

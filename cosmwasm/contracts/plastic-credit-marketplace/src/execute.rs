@@ -958,13 +958,8 @@ mod tests {
                     denom: "token".to_string(),
                     amount: Uint128::from(1337u128),
                 },
-<<<<<<< HEAD
-            };;
-            
-=======
                 operator: None,
             };
->>>>>>> upstream/main
             execute(deps.as_mut(), mock_env(), creator_info.clone(), create_listing_msg).unwrap();
 
             let update_listing_msg = ExecuteMsg::UpdateListing {
